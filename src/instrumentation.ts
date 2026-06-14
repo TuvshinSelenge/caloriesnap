@@ -83,15 +83,23 @@ export async function register() {
     return;
   }
 
-  try {
+  // Never let schema setup block server startup indefinitely. If the database is
+  // slow or unreachable, log and move on; DB-backed routes will surface errors.
+  const bootstrap = (async () => {
     const { prisma } = await import("@/lib/prisma");
     for (const statement of SCHEMA_STATEMENTS) {
       await prisma.$executeRawUnsafe(statement);
     }
+  })();
+
+  const timeout = new Promise<never>((_resolve, reject) =>
+    setTimeout(() => reject(new Error("schema bootstrap timed out after 15s")), 15000)
+  );
+
+  try {
+    await Promise.race([bootstrap, timeout]);
     console.log("[schema-init] Database schema verified.");
   } catch (error) {
-    // Don't crash startup — a connection blip shouldn't take the whole app down.
-    // DB-backed routes will surface their own errors if the schema is missing.
     console.error("[schema-init] Failed to ensure database schema:", error);
   }
 }

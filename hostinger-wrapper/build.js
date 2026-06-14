@@ -39,10 +39,31 @@ function run(command, args) {
 // NOTE: Do NOT run `prisma db push` here. Hostinger runs the build inside an
 // isolated sandbox whose `localhost:3306` is a throwaway MySQL (connections are
 // accepted but our production user is rejected with P1000), so build-time pushes
-// can never reach the real database. The schema is created at runtime via the
-// /api/auth/dbcheck endpoint, called once after deploy.
-//
-// We run a normal (non-standalone) build and serve it with a custom Next server
-// in server.js, so Next handles static assets and public/ automatically.
+// can never reach the real database. The schema is created via the
+// /api/auth/dbcheck endpoint (or phpMyAdmin) once after deploy.
 run("npm", ["ci"]);
 run("npm", ["run", "build"]);
+
+// Standalone output does not copy static assets or public/ into the bundle, so
+// the minimal server would serve HTML with no CSS/JS/images. Copy them in.
+const appDir = path.join(__dirname, "app");
+const standaloneDir = path.join(appDir, ".next", "standalone");
+
+function copyDirIfExists(from, to) {
+  if (!fs.existsSync(from)) return;
+  fs.mkdirSync(path.dirname(to), { recursive: true });
+  fs.cpSync(from, to, { recursive: true });
+  console.log(`> Copied ${path.relative(appDir, from)} -> ${path.relative(appDir, to)}`);
+}
+
+if (fs.existsSync(standaloneDir)) {
+  copyDirIfExists(
+    path.join(appDir, ".next", "static"),
+    path.join(standaloneDir, ".next", "static")
+  );
+  copyDirIfExists(path.join(appDir, "public"), path.join(standaloneDir, "public"));
+} else {
+  console.warn(
+    "> WARNING: .next/standalone not found after build. Ensure next.config.js sets output: 'standalone'."
+  );
+}

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ name: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -20,13 +20,12 @@ export default function LoginPage() {
 
     try {
       const result = await signIn("credentials", {
-        email: form.email,
-        password: form.password,
+        name: form.name.trim(),
         redirect: false,
       });
 
       if (result?.error) {
-        setError("Invalid email or password");
+        setError("Login failed. Try a different name.");
         return;
       }
 
@@ -47,28 +46,19 @@ export default function LoginPage() {
             CalorieSnap
           </Link>
           <h1 className="text-xl font-semibold text-[#1f1f1f] mt-4 mb-1">Welcome back</h1>
-          <p className="text-sm text-gray-500">Log in to continue tracking</p>
+          <p className="text-sm text-gray-500">Enter your name to continue</p>
         </div>
 
         <div className="bg-white rounded-2xl border border-[#fed7aa]/60 shadow-sm p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
-              label="Email"
-              type="email"
-              placeholder="you@example.com"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              label="Name"
+              type="text"
+              placeholder="Your name"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
-              autoComplete="email"
-            />
-            <Input
-              label="Password"
-              type="password"
-              placeholder="Your password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              required
-              autoComplete="current-password"
+              autoComplete="name"
             />
 
             {error && (
@@ -78,7 +68,7 @@ export default function LoginPage() {
             )}
 
             <Button type="submit" className="w-full" size="lg" loading={loading}>
-              Log in
+              Continue
             </Button>
           </form>
         </div>

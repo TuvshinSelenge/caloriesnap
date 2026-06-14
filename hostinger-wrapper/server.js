@@ -1,5 +1,8 @@
 process.env.NODE_ENV = process.env.NODE_ENV || "production";
-process.env.HOSTNAME = process.env.HOSTNAME || "0.0.0.0";
+// Force bind to all interfaces. Hostinger sets HOSTNAME to the machine hostname,
+// which makes the Next standalone server bind to the wrong interface so the
+// LiteSpeed proxy can't reach it (502/503). Overriding to 0.0.0.0 fixes this.
+process.env.HOSTNAME = "0.0.0.0";
 
 const fs = require("node:fs");
 const path = require("node:path");

@@ -10,6 +10,16 @@ const loginSchema = z.object({
 });
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  // Required on non-Vercel hosts (e.g. Hostinger) so Auth.js v5 trusts the
+  // incoming Host header instead of throwing UntrustedHost on every request.
+  trustHost: true,
+  // Prefer the env secret; fall back to a constant so the app never hard-crashes
+  // at startup if the runtime env var is missing. Set AUTH_SECRET in hPanel for
+  // real security — this fallback only prevents a 503 during initial setup.
+  secret:
+    process.env.AUTH_SECRET ??
+    process.env.NEXTAUTH_SECRET ??
+    "caloriesnap-fallback-secret-please-set-AUTH_SECRET-in-env",
   providers: [
     Credentials({
       credentials: {

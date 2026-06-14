@@ -1,0 +1,15 @@
+{
+  "name": "calories-hostinger-wrapper",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "node build.js",
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

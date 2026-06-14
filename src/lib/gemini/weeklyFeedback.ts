@@ -2,8 +2,6 @@ import { GoogleGenAI } from "@google/genai";
 import { WeeklyFeedbackSchema, type WeeklyFeedbackResult } from "./schemas";
 import { buildWeeklyFeedbackPrompt } from "./prompts";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
-
 interface FeedbackOptions {
   profile: {
     sex: string;
@@ -20,7 +18,13 @@ export async function generateWeeklyFeedback({
   profile,
   weeklySummary,
 }: FeedbackOptions): Promise<WeeklyFeedbackResult> {
-  const model = process.env.GEMINI_MODEL ?? "gemini-2.0-flash";
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY is required to generate weekly feedback.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
+  const model = process.env.GEMINI_MODEL ?? "gemini-3.5-flash";
   const prompt = buildWeeklyFeedbackPrompt({ profile, weeklySummary });
 
   const response = await ai.models.generateContent({

@@ -25,9 +25,9 @@ export default function SignupPage() {
         body: JSON.stringify(form),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
       if (!res.ok) {
-        setError(data.error ?? "Something went wrong");
+        setError(data?.error ?? "Something went wrong. Please try again.");
         return;
       }
 

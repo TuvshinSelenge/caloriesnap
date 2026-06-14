@@ -21,8 +21,7 @@ if (fs.existsSync(envPath)) {
 
     const key = trimmed.slice(0, separator).trim();
     const value = trimmed.slice(separator + 1).trim().replace(/^['"]|['"]$/g, "");
-    // Force app/.env to win over stale panel-level env values.
-    process.env[key] = value;
+    if (!(key in process.env)) process.env[key] = value;
   }
 }
 

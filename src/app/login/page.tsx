@@ -1,0 +1,95 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const result = await signIn("credentials", {
+        email: form.email,
+        password: form.password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError("Invalid email or password");
+        return;
+      }
+
+      router.push("/dashboard");
+      router.refresh();
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-[#fffaf3] flex flex-col items-center justify-center px-4">
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <Link href="/" className="font-bold text-[#f97316] text-2xl tracking-tight">
+            CalorieSnap
+          </Link>
+          <h1 className="text-xl font-semibold text-[#1f1f1f] mt-4 mb-1">Welcome back</h1>
+          <p className="text-sm text-gray-500">Log in to continue tracking</p>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-[#fed7aa]/60 shadow-sm p-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Input
+              label="Email"
+              type="email"
+              placeholder="you@example.com"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              required
+              autoComplete="email"
+            />
+            <Input
+              label="Password"
+              type="password"
+              placeholder="Your password"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              required
+              autoComplete="current-password"
+            />
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600">
+                {error}
+              </div>
+            )}
+
+            <Button type="submit" className="w-full" size="lg" loading={loading}>
+              Log in
+            </Button>
+          </form>
+        </div>
+
+        <p className="text-center mt-6 text-sm text-gray-500">
+          Don&apos;t have an account?{" "}
+          <Link href="/signup" className="text-[#f97316] font-medium hover:underline">
+            Sign up
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}

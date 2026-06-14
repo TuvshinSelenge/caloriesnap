@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Sex {
+  male
+  female
+  other
+  prefer_not_to_say
+}
+
+enum ActivityLevel {
+  sedentary
+  light
+  moderate
+  active
+  very_active
+}
+
+enum GoalType {
+  lose_weight
+  maintain_weight
+  gain_weight
+}
+
+enum MealSource {
+  ai_image
+  manual
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  profile     Profile?
+  meals       Meal[]
+  aiFeedbacks AiFeedback[]
+}
+
+model Profile {
+  id                 String        @id @default(cuid())
+  userId             String        @unique
+  displayName        String
+  sex                Sex
+  age                Int
+  heightCm           Float
+  currentWeightKg    Float
+  targetWeightKg     Float?
+  activityLevel      ActivityLevel
+  goalType           GoalType
+  weeklyTargetKg     Float?
+  calculatedTdee     Int?
+  dailyCalorieTarget Int
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Meal {
+  id                 String     @id @default(cuid())
+  userId             String
+  name               String
+  eatenAt            DateTime
+  source             MealSource @default(ai_image)
+  calories           Int
+  proteinG           Float?
+  carbsG             Float?
+  fatG               Float?
+  portionDescription String?
+  userNotes          String?
+  aiConfidence       Float?
+  aiAssumptions      Json?
+  imageStored        Boolean    @default(false)
+  imageUrl           String?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, eatenAt])
+}
+
+model AiFeedback {
+  id          String   @id @default(cuid())
+  userId      String
+  periodStart DateTime
+  periodEnd   DateTime
+  type        String
+  summary     String   @db.Text
+  jsonPayload Json?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, periodStart, periodEnd])
+}

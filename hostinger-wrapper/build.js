@@ -36,14 +36,12 @@ function run(command, args) {
   }
 }
 
-// Hostinger runs this build on the hosting server itself (under
-// .builds/source), so `localhost:3306` is the real production MySQL and the
-// Prisma CLI is available here. Push the schema during build to create/update
-// tables — this is verifiable in the build logs. (server.js also attempts an
-// idempotent runtime push as a backup, in case the CLI is pruned at runtime.)
-// The earlier P1000 failures were a stale DB password, now corrected.
+// NOTE: Do NOT run `prisma db push` here. Hostinger runs the build inside an
+// isolated sandbox whose `localhost:3306` is a throwaway MySQL (connections are
+// accepted but our production user is rejected with P1000), so build-time pushes
+// can never reach the real database. Schema creation happens at runtime instead
+// (see app instrumentation + server.js), where localhost is the production DB.
 run("npm", ["ci"]);
-run("npx", ["prisma", "db", "push", "--skip-generate"]);
 run("npm", ["run", "build"]);
 
 // `output: "standalone"` does not copy static assets or the public/ folder into

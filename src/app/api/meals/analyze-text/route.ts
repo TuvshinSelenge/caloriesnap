@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { analyzeFoodImage } from "@/lib/gemini/analyzeFoodImage";
+import { analyzeFoodText } from "@/lib/gemini/analyzeFoodText";
 import { rateLimit } from "@/lib/rate-limit";
 
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const MAX_BYTES = parseInt(process.env.MAX_IMAGE_UPLOAD_MB ?? "6") * 1024 * 1024;
+const bodySchema = z.object({
+  description: z.string().trim().min(2).max(1000),
+  hint: z.string().trim().max(500).optional(),
+});
 
 export async function POST(req: NextRequest) {
   const session = await auth();
@@ -15,8 +18,7 @@ export async function POST(req: NextRequest) {
 
   const userId = session.user.id;
 
-  // Rate limit: 10 analyses per minute per user
-  if (!rateLimit(`analyze:${userId}`, 10, 60_000)) {
+  if (!rateLimit(`analyze-text:${userId}`, 15, 60_000)) {
     return NextResponse.json(
       { error: "Too many requests. Please wait a moment." },
       { status: 429 }
@@ -31,42 +33,25 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  let formData: FormData;
+  let json: unknown;
   try {
-    formData = await req.formData();
+    json = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const file = formData.get("image") as File | null;
-  const hint = (formData.get("hint") as string | null) ?? undefined;
-
-  if (!file) {
-    return NextResponse.json({ error: "No image provided" }, { status: 400 });
-  }
-
-  if (!ALLOWED_TYPES.includes(file.type)) {
+  const parsed = bodySchema.safeParse(json);
+  if (!parsed.success) {
     return NextResponse.json(
-      { error: "Unsupported image type. Use JPEG, PNG, or WebP." },
-      { status: 400 }
-    );
-  }
-
-  if (file.size > MAX_BYTES) {
-    return NextResponse.json(
-      { error: `Image too large. Max ${process.env.MAX_IMAGE_UPLOAD_MB ?? 6}MB.` },
+      { error: "Please describe what you ate (at least a few words)." },
       { status: 400 }
     );
   }
 
   try {
-    const arrayBuffer = await file.arrayBuffer();
-    const imageBuffer = Buffer.from(arrayBuffer);
-
-    const analysis = await analyzeFoodImage({
-      imageBuffer,
-      mimeType: file.type,
-      userHint: hint,
+    const analysis = await analyzeFoodText({
+      description: parsed.data.description,
+      userHint: parsed.data.hint,
       profile: {
         sex: profile.sex,
         age: profile.age,
@@ -78,7 +63,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ analysis });
   } catch (err) {
-    console.error("Gemini analysis error:", err);
+    console.error("Gemini text analysis error:", err);
     const message = err instanceof Error ? err.message : String(err);
 
     if (message.includes("GEMINI_API_KEY")) {
@@ -101,7 +86,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: "Failed to analyze image. Please try again." },
+      { error: "Failed to estimate from your description. Please try again." },
       { status: 500 }
     );
   }

@@ -60,6 +60,72 @@ Required JSON shape:
 }`;
 }
 
+interface FoodTextPromptContext {
+  description: string;
+  userHint?: string;
+  profile: {
+    sex: string;
+    age: number;
+    heightCm: number;
+    currentWeightKg: number;
+    dailyCalorieTarget: number;
+  };
+}
+
+export function buildFoodTextPrompt({ description, userHint, profile }: FoodTextPromptContext): string {
+  return `You are a careful nutrition estimation assistant inside a calorie tracking app.
+
+Task:
+The user describes a meal in plain text (no photo). Estimate the likely food items, portion size, calories, and macros from their description.
+
+Important:
+- The result is only an estimate based on text, so it can be quite uncertain.
+- Be conservative and honest about uncertainty.
+- If the description is vague (no portion size, no preparation method), assume typical/average portions and note this in assumptions, and lower confidence.
+- Use the user's hint when helpful.
+- Do not give medical diagnosis.
+- Do not give unsafe dieting advice.
+- Do not recommend extreme restriction.
+- Return JSON only.
+- Do not include markdown.
+- Do not include commentary outside JSON.
+
+User profile context:
+- Sex: ${profile.sex}
+- Age: ${profile.age}
+- Height: ${profile.heightCm} cm
+- Current weight: ${profile.currentWeightKg} kg
+- Daily calorie target: ${profile.dailyCalorieTarget} kcal
+
+Meal description (from the user):
+${description}
+
+Optional extra hint:
+${userHint || "(none provided)"}
+
+Required JSON shape:
+{
+  "mealName": "string",
+  "detectedFoods": ["string"],
+  "portionDescription": "string",
+  "calories": {
+    "min": 0,
+    "mostLikely": 0,
+    "max": 0
+  },
+  "macros": {
+    "proteinG": 0,
+    "carbsG": 0,
+    "fatG": 0
+  },
+  "confidence": 0.0,
+  "assumptions": ["string"],
+  "uncertaintyReasons": ["string"],
+  "userHintUsed": true,
+  "healthNotes": ["string"]
+}`;
+}
+
 interface WeeklyFeedbackContext {
   profile: {
     sex: string;

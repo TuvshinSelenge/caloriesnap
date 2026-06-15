@@ -15,20 +15,16 @@ const signupSchema = z.object({
 function getSignupError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
 
-  if (
-    message.includes("Unknown authentication plugin") &&
-    message.includes("sha256_password")
-  ) {
+  if (message.includes("Environment variable not found: DATABASE_URL")) {
     return {
-      error:
-        "Database login is misconfigured. The MySQL user uses sha256_password, which Prisma cannot use here.",
+      error: "Database connection is missing. Please set DATABASE_URL.",
       status: 503,
     };
   }
 
-  if (message.includes("Environment variable not found: DATABASE_URL")) {
+  if (message.includes("Environment variable not found: DIRECT_URL")) {
     return {
-      error: "Database connection is missing. Please set DATABASE_URL.",
+      error: "Database direct connection is missing. Please set DIRECT_URL.",
       status: 503,
     };
   }

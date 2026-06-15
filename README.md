@@ -4,7 +4,7 @@ CalorieSnap is a mobile-first calorie tracking web app that lets users log meals
 
 ## Features
 
-- Email/password authentication (Auth.js v5 + bcrypt)
+- Name-only authentication (Auth.js v5 Credentials)
 - First-time profile onboarding with Mifflin-St Jeor calorie calculation
 - AI food photo analysis via Google Gemini
 - Optional food hint text for better accuracy
@@ -36,15 +36,16 @@ cp .env.example .env
 
 Edit `.env` and fill in:
 
-- `DATABASE_URL` — your MySQL connection string
+- `DATABASE_URL` — your Supabase pooler Postgres connection string
+- `DIRECT_URL` — your Supabase direct Postgres connection string
 - `AUTH_SECRET` — run `openssl rand -base64 32` to generate
 - `NEXTAUTH_URL` — `http://localhost:3000` for local dev
 - `GEMINI_API_KEY` — your Google Gemini API key
 
-### 3. Run database migration
+### 3. Initialize database schema
 
 ```bash
-npx prisma migrate dev --name init
+npx prisma db push
 ```
 
 ### 4. Start dev server
@@ -57,49 +58,11 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## Deployment on Hostinger (Node.js hosting)
+## Supabase Setup Notes
 
-### 1. Create MySQL database in Hostinger hPanel
-
-Go to **Hosting → Databases → MySQL Databases** and create a new database and user.
-
-### 2. Set environment variables in hPanel
-
-In **Node.js** settings, add:
-
-| Variable | Value |
-|---|---|
-| `DATABASE_URL` | `mysql://USER:PASSWORD@HOST:3306/DATABASE` |
-| `AUTH_SECRET` | *(run `openssl rand -base64 32`)* |
-| `NEXTAUTH_URL` | `https://yourdomain.com` |
-| `GEMINI_API_KEY` | *(your Gemini key)* |
-| `GEMINI_MODEL` | `gemini-2.0-flash` |
-| `MAX_IMAGE_UPLOAD_MB` | `6` |
-
-### 3. Deploy
-
-Push your project to GitHub. In Hostinger hPanel:
-
-1. Go to **Website → Node.js**
-2. Connect your GitHub repository
-3. Set the startup file to `server.js` (or follow Hostinger's Next.js deploy guide)
-4. Set Node.js version to 18+ (required by Next.js 16)
-
-### 4. Run Prisma migration on production
-
-SSH into your Hostinger server:
-
-```bash
-cd /path/to/your/app
-npx prisma migrate deploy
-```
-
-### 5. Build and start
-
-```bash
-npm run build
-npm start
-```
+- Use your Supabase **direct connection** string for both `DATABASE_URL` and `DIRECT_URL` in this project.
+- If your DB password has special characters (`!`, `@`, `#`, etc.), URL-encode them in the connection string.
+- If you are running in a serverless platform later, switch `DATABASE_URL` to Supabase pooler (`:6543`) and keep `DIRECT_URL` as direct (`:5432`).
 
 ---
 
@@ -110,7 +73,7 @@ npm start
 | Framework | Next.js 16 (App Router) |
 | Language | TypeScript |
 | Styling | Tailwind CSS v4 |
-| Database | MySQL (Hostinger) |
+| Database | Supabase Postgres |
 | ORM | Prisma v5 |
 | Auth | Auth.js v5 (Credentials) |
 | AI | Google Gemini 2.0 Flash |
@@ -166,7 +129,7 @@ prisma/
 ## Security Notes
 
 - Gemini API key is never sent to the browser — all AI calls are server-side only
-- Passwords are hashed with bcrypt (12 rounds)
+- Name-only login is enabled (no password required)
 - Images are not stored by default
 - All API routes validate user ownership before returning data
 - File upload is limited by size (`MAX_IMAGE_UPLOAD_MB`) and MIME type

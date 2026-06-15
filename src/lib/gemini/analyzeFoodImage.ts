@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import { FoodAnalysisSchema, type FoodAnalysisResult } from "./schemas";
 import { buildFoodPrompt } from "./prompts";
 
@@ -45,6 +45,9 @@ export async function analyzeFoodImage({
     config: {
       responseMimeType: "application/json",
       temperature: 0.2,
+      // Food estimation is a simple, low-reasoning task. Default for 3.x Flash is
+      // MEDIUM thinking, which adds latency. LOW keeps quality while responding fast.
+      thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
     },
   });
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { generateWeeklyFeedback } from "@/lib/gemini/weeklyFeedback";
+import { getGeminiHttpError } from "@/lib/gemini/client";
 import { startOfDay, endOfDay, subDays, format } from "date-fns";
 
 export async function POST() {
@@ -93,10 +94,8 @@ export async function POST() {
     return NextResponse.json({ feedback, id: saved.id });
   } catch (err) {
     console.error("Weekly feedback error:", err);
-    return NextResponse.json(
-      { error: "Failed to generate feedback" },
-      { status: 500 }
-    );
+    const error = getGeminiHttpError(err, "Failed to generate feedback");
+    return NextResponse.json({ error: error.message }, { status: error.status });
   }
 }
 

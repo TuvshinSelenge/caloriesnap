@@ -12,6 +12,10 @@ interface UploadMealCardProps {
 
 type Mode = "photo" | "text";
 
+const MAX_ANALYSIS_IMAGE_DIMENSION = 1280;
+const MAX_DIRECT_IMAGE_BYTES = 1_500_000;
+const ANALYSIS_IMAGE_QUALITY = 0.82;
+
 export function UploadMealCard({ onMealSaved }: UploadMealCardProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<Mode>("photo");
@@ -48,7 +52,8 @@ export function UploadMealCard({ onMealSaved }: UploadMealCardProps) {
 
     try {
       const fd = new FormData();
-      fd.append("image", file);
+      const analysisFile = await prepareImageForAnalysis(file);
+      fd.append("image", analysisFile);
       if (hint) fd.append("hint", hint);
 
       const res = await fetch("/api/meals/analyze", { method: "POST", body: fd });
@@ -263,4 +268,61 @@ export function UploadMealCard({ onMealSaved }: UploadMealCardProps) {
       )}
     </div>
   );
+}
+
+async function prepareImageForAnalysis(file: File): Promise<File> {
+  try {
+    const image = await loadImage(file);
+    const largestSide = Math.max(image.naturalWidth, image.naturalHeight);
+    const scale = Math.min(1, MAX_ANALYSIS_IMAGE_DIMENSION / largestSide);
+
+    if (scale === 1 && file.size <= MAX_DIRECT_IMAGE_BYTES && file.type === "image/jpeg") {
+      return file;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return file;
+
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, "image/jpeg", ANALYSIS_IMAGE_QUALITY);
+    });
+
+    if (!blob || blob.size >= file.size) return file;
+
+    return new File([blob], replaceFileExtension(file.name, "jpg"), {
+      type: "image/jpeg",
+      lastModified: file.lastModified,
+    });
+  } catch {
+    return file;
+  }
+}
+
+function loadImage(file: File): Promise<HTMLImageElement> {
+  const url = URL.createObjectURL(file);
+
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Failed to load image"));
+    };
+    image.src = url;
+  });
+}
+
+function replaceFileExtension(fileName: string, extension: string): string {
+  return fileName.includes(".")
+    ? fileName.replace(/\.[^.]+$/, `.${extension}`)
+    : `${fileName}.${extension}`;
 }

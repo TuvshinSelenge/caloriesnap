@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { analyzeFoodImage } from "@/lib/gemini/analyzeFoodImage";
+import { getGeminiHttpError } from "@/lib/gemini/client";
 import { rateLimit } from "@/lib/rate-limit";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -79,30 +80,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ analysis });
   } catch (err) {
     console.error("Gemini analysis error:", err);
-    const message = err instanceof Error ? err.message : String(err);
-
-    if (message.includes("GEMINI_API_KEY")) {
-      return NextResponse.json(
-        { error: "AI is not configured: GEMINI_API_KEY is missing on the server." },
-        { status: 503 }
-      );
-    }
-    if (/api key|API_KEY_INVALID|permission|401|403/i.test(message)) {
-      return NextResponse.json(
-        { error: "AI rejected the request — check that GEMINI_API_KEY is valid." },
-        { status: 502 }
-      );
-    }
-    if (/not found|404|model/i.test(message)) {
-      return NextResponse.json(
-        { error: `AI model error — check GEMINI_MODEL. (${message})` },
-        { status: 502 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: "Failed to analyze image. Please try again." },
-      { status: 500 }
-    );
+    const error = getGeminiHttpError(err, "Failed to analyze image. Please try again.");
+    return NextResponse.json({ error: error.message }, { status: error.status });
   }
 }

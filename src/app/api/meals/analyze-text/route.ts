@@ -3,6 +3,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { analyzeFoodText } from "@/lib/gemini/analyzeFoodText";
+import { getGeminiHttpError } from "@/lib/gemini/client";
 import { rateLimit } from "@/lib/rate-limit";
 
 const bodySchema = z.object({
@@ -64,30 +65,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ analysis });
   } catch (err) {
     console.error("Gemini text analysis error:", err);
-    const message = err instanceof Error ? err.message : String(err);
-
-    if (message.includes("GEMINI_API_KEY")) {
-      return NextResponse.json(
-        { error: "AI is not configured: GEMINI_API_KEY is missing on the server." },
-        { status: 503 }
-      );
-    }
-    if (/api key|API_KEY_INVALID|permission|401|403/i.test(message)) {
-      return NextResponse.json(
-        { error: "AI rejected the request — check that GEMINI_API_KEY is valid." },
-        { status: 502 }
-      );
-    }
-    if (/not found|404|model/i.test(message)) {
-      return NextResponse.json(
-        { error: `AI model error — check GEMINI_MODEL. (${message})` },
-        { status: 502 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: "Failed to estimate from your description. Please try again." },
-      { status: 500 }
+    const error = getGeminiHttpError(
+      err,
+      "Failed to estimate from your description. Please try again."
     );
+    return NextResponse.json({ error: error.message }, { status: error.status });
   }
 }

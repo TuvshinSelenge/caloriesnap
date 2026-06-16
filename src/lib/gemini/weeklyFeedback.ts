@@ -1,6 +1,7 @@
-import { GoogleGenAI } from "@google/genai";
+import { ThinkingLevel } from "@google/genai";
 import { WeeklyFeedbackSchema, type WeeklyFeedbackResult } from "./schemas";
 import { buildWeeklyFeedbackPrompt } from "./prompts";
+import { getGeminiClient, getGeminiModel, parseGeminiJson, runGeminiRequest } from "./client";
 
 interface FeedbackOptions {
   profile: {
@@ -18,25 +19,21 @@ export async function generateWeeklyFeedback({
   profile,
   weeklySummary,
 }: FeedbackOptions): Promise<WeeklyFeedbackResult> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error("GEMINI_API_KEY is required to generate weekly feedback.");
-  }
-
-  const ai = new GoogleGenAI({ apiKey });
-  const model = process.env.GEMINI_MODEL ?? "gemini-3.5-flash";
+  const ai = getGeminiClient();
+  const model = getGeminiModel();
   const prompt = buildWeeklyFeedbackPrompt({ profile, weeklySummary });
 
-  const response = await ai.models.generateContent({
-    model,
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    config: {
-      responseMimeType: "application/json",
-      temperature: 0.4,
-    },
-  });
+  const response = await runGeminiRequest(() =>
+    ai.models.generateContent({
+      model,
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: {
+        responseMimeType: "application/json",
+        temperature: 0.4,
+        thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+      },
+    })
+  );
 
-  const text = response.text ?? "";
-  const parsed = JSON.parse(text);
-  return WeeklyFeedbackSchema.parse(parsed);
+  return parseGeminiJson(response.text, WeeklyFeedbackSchema);
 }

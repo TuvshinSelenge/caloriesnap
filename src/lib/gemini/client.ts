@@ -11,7 +11,7 @@ type GeminiErrorCode =
   | "transient"
   | "unknown";
 
-const DEFAULT_MODEL = "gemini-2.5-flash-lite";
+const DEFAULT_MODEL = "gemini-3.5-flash";
 const DEFAULT_TIMEOUT_MS = 25_000;
 const DEFAULT_MAX_RETRIES = 1;
 const DEFAULT_RETRY_BASE_MS = 500;
@@ -19,6 +19,11 @@ const DEFAULT_MAX_RETRY_DELAY_MS = 2_500;
 
 let geminiClient: GoogleGenAI | null = null;
 let geminiClientApiKey: string | null = null;
+
+interface GeminiRequestOptions {
+  timeoutMs?: number;
+  maxRetries?: number;
+}
 
 export class GeminiRequestError extends Error {
   readonly code: GeminiErrorCode;
@@ -64,9 +69,12 @@ export function getGeminiModel(): string {
   return process.env.GEMINI_MODEL?.trim() || DEFAULT_MODEL;
 }
 
-export async function runGeminiRequest<T>(operation: () => Promise<T>): Promise<T> {
-  const timeoutMs = readPositiveInt("GEMINI_TIMEOUT_MS", DEFAULT_TIMEOUT_MS);
-  const maxRetries = readPositiveInt("GEMINI_MAX_RETRIES", DEFAULT_MAX_RETRIES);
+export async function runGeminiRequest<T>(
+  operation: () => Promise<T>,
+  options: GeminiRequestOptions = {}
+): Promise<T> {
+  const timeoutMs = options.timeoutMs ?? readPositiveInt("GEMINI_TIMEOUT_MS", DEFAULT_TIMEOUT_MS);
+  const maxRetries = options.maxRetries ?? readPositiveInt("GEMINI_MAX_RETRIES", DEFAULT_MAX_RETRIES);
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {

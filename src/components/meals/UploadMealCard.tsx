@@ -12,9 +12,9 @@ interface UploadMealCardProps {
 
 type Mode = "photo" | "text";
 
-const MAX_ANALYSIS_IMAGE_DIMENSION = 1280;
-const MAX_DIRECT_IMAGE_BYTES = 1_500_000;
-const ANALYSIS_IMAGE_QUALITY = 0.82;
+const MAX_ANALYSIS_IMAGE_DIMENSION = 960;
+const MAX_DIRECT_IMAGE_BYTES = 600_000;
+const ANALYSIS_IMAGE_QUALITY = 0.72;
 
 export function UploadMealCard({ onMealSaved }: UploadMealCardProps) {
   const fileRef = useRef<HTMLInputElement>(null);

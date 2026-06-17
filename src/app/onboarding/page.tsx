@@ -142,9 +142,9 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fffaf3] flex flex-col items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-[#fffaf3] flex flex-col items-center justify-start px-4 pt-8 pb-[calc(2rem+env(safe-area-inset-bottom))] sm:justify-center sm:py-12">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 sm:mb-8">
           <span className="font-bold text-[#f97316] text-xl tracking-tight">CalorieSnap</span>
           <h1 className="text-2xl font-bold text-[#1f1f1f] mt-3 mb-1">Set up your profile</h1>
           <p className="text-sm text-gray-500">We use this to personalise your calorie target</p>
@@ -285,7 +285,7 @@ export default function OnboardingPage() {
               {estimatedTarget > 0 && (
                 <div className="bg-[#fff7ed] border border-[#fed7aa] rounded-xl p-4">
                   <p className="text-sm text-[#ea580c] font-medium mb-1">AI estimate</p>
-                  <p className="text-3xl font-bold text-[#f97316]">{estimatedTarget} kcal/day</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-[#f97316]">{estimatedTarget} kcal/day</p>
                   <p className="text-xs text-gray-500 mt-1">
                     Based on Mifflin-St Jeor formula + activity level
                   </p>

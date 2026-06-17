@@ -28,7 +28,7 @@ export function MacroBar({ protein, carbs, fat }: MacroBarProps) {
           style={{ width: `${fatPct}%` }}
         />
       </div>
-      <div className="flex gap-4 text-xs text-gray-600">
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
         <span className="flex items-center gap-1">
           <span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />
           Protein {Math.round(protein)}g

@@ -42,7 +42,7 @@ export function AnalysisReviewCard({
     fatG: analysis.macros.fatG != null ? String(Math.round(analysis.macros.fatG)) : "",
     portionDescription: analysis.portionDescription,
     userNotes: "",
-    eatenAt: new Date().toISOString().slice(0, 16),
+    eatenAt: toLocalDateTimeInputValue(new Date()),
   });
   const [saving, setSaving] = useState(false);
 
@@ -78,7 +78,7 @@ export function AnalysisReviewCard({
   return (
     <div className="bg-white rounded-2xl border border-[#fed7aa]/60 shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="bg-[#fff7ed] border-b border-[#fed7aa]/60 px-5 py-4">
+      <div className="bg-[#fff7ed] border-b border-[#fed7aa]/60 px-4 py-4 sm:px-5">
         <div className="flex items-start gap-3">
           {imagePreview && (
             // eslint-disable-next-line @next/next/no-img-element
@@ -105,7 +105,7 @@ export function AnalysisReviewCard({
         </div>
       </div>
 
-      <div className="p-5 space-y-4">
+      <div className="p-4 sm:p-5 space-y-4">
         {notice && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
             {notice}
@@ -212,4 +212,20 @@ export function AnalysisReviewCard({
       </div>
     </div>
   );
+}
+
+function toLocalDateTimeInputValue(date: Date): string {
+  const pad = (value: number) => String(value).padStart(2, "0");
+
+  return [
+    date.getFullYear(),
+    "-",
+    pad(date.getMonth() + 1),
+    "-",
+    pad(date.getDate()),
+    "T",
+    pad(date.getHours()),
+    ":",
+    pad(date.getMinutes()),
+  ].join("");
 }

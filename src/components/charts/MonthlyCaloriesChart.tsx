@@ -25,7 +25,7 @@ interface MonthlyCaloriesChartProps {
 export function MonthlyCaloriesChart({ data, target }: MonthlyCaloriesChartProps) {
   return (
     <ResponsiveContainer width="100%" height={220}>
-      <BarChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: -20 }}>
+      <BarChart data={data} margin={{ top: 8, right: 0, bottom: 0, left: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#fed7aa40" vertical={false} />
         <XAxis
           dataKey="label"

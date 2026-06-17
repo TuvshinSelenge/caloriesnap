@@ -20,13 +20,13 @@ interface MealCardProps {
 
 export function MealCard({ meal, onDelete }: MealCardProps) {
   return (
-    <div className="flex items-start gap-3 p-4 bg-white rounded-2xl border border-[#fed7aa]/60 shadow-sm">
+    <div className="flex items-start gap-3 p-3.5 sm:p-4 bg-white rounded-2xl border border-[#fed7aa]/60 shadow-sm">
       <div className="w-10 h-10 rounded-xl bg-[#fff7ed] flex items-center justify-center text-lg flex-shrink-0">
         {meal.source === "ai_image" ? "📸" : "✏️"}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
-          <div>
+          <div className="min-w-0">
             <p className="font-medium text-[#1f1f1f] text-sm truncate">{meal.name}</p>
             {meal.portionDescription && (
               <p className="text-xs text-gray-500 mt-0.5 truncate">{meal.portionDescription}</p>

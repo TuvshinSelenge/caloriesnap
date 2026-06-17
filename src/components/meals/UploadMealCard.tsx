@@ -183,7 +183,7 @@ export function UploadMealCard({ onMealSaved }: UploadMealCardProps) {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-[#fed7aa]/60 shadow-sm p-5">
+    <div className="bg-white rounded-2xl border border-[#fed7aa]/60 shadow-sm p-4 sm:p-5">
       <h3 className="font-semibold text-[#1f1f1f] mb-1">Log a meal</h3>
       <p className="text-sm text-gray-500 mb-4">
         Use a photo or describe the meal. Add portions for the best estimate.

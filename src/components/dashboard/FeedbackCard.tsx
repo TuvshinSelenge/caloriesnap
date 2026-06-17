@@ -78,7 +78,7 @@ export function FeedbackCard() {
 
   return (
     <Card>
-      <div className="flex items-start justify-between gap-3 mb-4">
+      <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-xs font-medium text-[#ea580c] mb-1">AI Weekly Feedback</p>
           <h2 className="font-bold text-[#1f1f1f] text-lg leading-tight">{feedback.headline}</h2>
@@ -86,7 +86,7 @@ export function FeedbackCard() {
         <button
           onClick={handleGenerate}
           disabled={generating}
-          className="text-xs text-[#f97316] hover:underline flex-shrink-0 mt-1 disabled:opacity-50"
+          className="min-h-9 self-start text-sm sm:text-xs text-[#f97316] hover:underline flex-shrink-0 disabled:opacity-50"
         >
           {generating ? "Updating..." : "Refresh"}
         </button>

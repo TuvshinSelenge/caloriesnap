@@ -38,9 +38,9 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fffaf3] flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen bg-[#fffaf3] flex flex-col items-center justify-start px-4 pt-14 pb-[calc(2rem+env(safe-area-inset-bottom))] sm:justify-center sm:py-12">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 sm:mb-8">
           <Link href="/" className="font-bold text-[#f97316] text-2xl tracking-tight">
             CalorieSnap
           </Link>
@@ -48,7 +48,7 @@ export default function SignupPage() {
           <p className="text-sm text-gray-500">Enter your name to get started</p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-[#fed7aa]/60 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-[#fed7aa]/60 shadow-sm p-5 sm:p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="Name"

@@ -116,7 +116,7 @@ export default function SettingsPage() {
                     { value: "prefer_not_to_say", label: "Prefer not to say" },
                   ]}
                 />
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Input
                     label="Age"
                     type="number"
@@ -132,7 +132,7 @@ export default function SettingsPage() {
                     onChange={(e) => set("heightCm", parseFloat(e.target.value))}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Input
                     label="Current weight (kg)"
                     type="number"

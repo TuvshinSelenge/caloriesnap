@@ -51,7 +51,7 @@ export function MobileBottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#fed7aa]/60 flex md:hidden z-40 safe-area-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-[#fed7aa]/60 flex md:hidden z-40 safe-area-bottom">
       {navItems.map((item) => {
         const active = pathname.startsWith(item.href);
         return (
@@ -59,7 +59,7 @@ export function MobileBottomNav() {
             key={item.href}
             href={item.href}
             className={[
-              "flex-1 flex flex-col items-center py-2.5 gap-0.5 transition-colors",
+              "min-h-14 flex-1 flex flex-col items-center justify-center py-2 gap-0.5 transition-colors",
               active ? "text-[#f97316]" : "text-gray-400 hover:text-gray-600",
             ].join(" ")}
           >

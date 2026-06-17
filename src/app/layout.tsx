@@ -1,10 +1,15 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { SessionProvider } from "@/components/layout/SessionProvider";
 
 export const metadata: Metadata = {
   title: "CalorieSnap – Track meals from a photo",
   description: "AI-powered calorie tracking. Take a photo, get instant estimates.",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#fffaf3",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

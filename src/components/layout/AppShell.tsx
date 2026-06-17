@@ -17,6 +17,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* Mobile top bar */}
+      <header className="md:hidden sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-[#fed7aa]/60">
+        <div className="h-14 px-4 flex items-center justify-between">
+          <Link href="/dashboard" className="font-bold text-[#f97316] tracking-tight">
+            CalorieSnap
+          </Link>
+          <button
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="min-h-10 px-3 text-sm font-medium text-gray-500 hover:text-gray-800"
+          >
+            Sign out
+          </button>
+        </div>
+      </header>
+
       {/* Desktop top nav */}
       <header className="hidden md:flex sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-[#fed7aa]/60">
         <div className="max-w-5xl mx-auto w-full px-6 flex items-center h-14 gap-8">
@@ -52,8 +67,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Page content */}
-      <main className="flex-1 pb-20 md:pb-0">
-        <div className="max-w-5xl mx-auto w-full px-4 md:px-6 py-6">
+      <main className="flex-1 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0">
+        <div className="max-w-5xl mx-auto w-full px-3 sm:px-4 md:px-6 py-4 sm:py-6">
           {children}
         </div>
       </main>

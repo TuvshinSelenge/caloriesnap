@@ -1,23 +1,33 @@
 import { z } from "zod";
 
+const roundedNonnegativeNumber = z.coerce
+  .number()
+  .nonnegative()
+  .transform((value) => Math.round(value));
+
+const nullableNonnegativeNumber = z.preprocess(
+  (value) => (value === "" ? null : value),
+  z.coerce.number().nonnegative().nullable()
+);
+
 export const FoodAnalysisSchema = z.object({
   mealName: z.string().min(1),
   detectedFoods: z.array(z.string()).default([]),
   portionDescription: z.string().min(1),
   calories: z.object({
-    min: z.number().int().nonnegative(),
-    mostLikely: z.number().int().nonnegative(),
-    max: z.number().int().nonnegative(),
+    min: roundedNonnegativeNumber,
+    mostLikely: roundedNonnegativeNumber,
+    max: roundedNonnegativeNumber,
   }),
   macros: z.object({
-    proteinG: z.number().nonnegative().nullable(),
-    carbsG: z.number().nonnegative().nullable(),
-    fatG: z.number().nonnegative().nullable(),
+    proteinG: nullableNonnegativeNumber,
+    carbsG: nullableNonnegativeNumber,
+    fatG: nullableNonnegativeNumber,
   }),
-  confidence: z.number().min(0).max(1),
+  confidence: z.coerce.number().min(0).max(1),
   assumptions: z.array(z.string()).default([]),
   uncertaintyReasons: z.array(z.string()).default([]),
-  userHintUsed: z.boolean(),
+  userHintUsed: z.coerce.boolean(),
   healthNotes: z.array(z.string()).default([]),
 });
 

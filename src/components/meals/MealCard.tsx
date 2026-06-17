@@ -57,7 +57,7 @@ export function MealCard({ meal, onDelete }: MealCardProps) {
       {onDelete && (
         <button
           onClick={() => onDelete(meal.id)}
-          className="text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 mt-0.5"
+          className="-m-2 min-h-11 min-w-11 p-2 text-gray-300 hover:text-red-400 transition-colors flex-shrink-0"
           aria-label="Delete meal"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

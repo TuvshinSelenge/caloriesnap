@@ -9,6 +9,7 @@ import type { FoodAnalysisResult } from "@/lib/gemini/schemas";
 interface AnalysisReviewCardProps {
   analysis: FoodAnalysisResult;
   imagePreview?: string;
+  notice?: string;
   onSave: (data: SaveData) => Promise<void>;
   onDiscard: () => void;
 }
@@ -29,6 +30,7 @@ export interface SaveData {
 export function AnalysisReviewCard({
   analysis,
   imagePreview,
+  notice,
   onSave,
   onDiscard,
 }: AnalysisReviewCardProps) {
@@ -83,15 +85,15 @@ export function AnalysisReviewCard({
             <img
               src={imagePreview}
               alt="Food"
-              className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
+              className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover flex-shrink-0"
             />
           )}
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <p className="text-xs font-medium text-[#ea580c] mb-1">AI estimate — please review before saving</p>
             <p className="text-xs text-gray-500">
               Food photos can be inaccurate, especially for hidden oils, sauces, and portion size.
             </p>
-            <div className="flex gap-4 mt-2 text-xs">
+            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs">
               <span className="text-gray-500">
                 Range: {analysis.calories.min}–{analysis.calories.max} kcal
               </span>
@@ -104,6 +106,12 @@ export function AnalysisReviewCard({
       </div>
 
       <div className="p-5 space-y-4">
+        {notice && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+            {notice}
+          </div>
+        )}
+
         {/* Detected foods */}
         {analysis.detectedFoods.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
@@ -130,7 +138,7 @@ export function AnalysisReviewCard({
           onChange={(e) => set("portionDescription", e.target.value)}
         />
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Input
             label="Calories (kcal)"
             type="number"
@@ -188,7 +196,7 @@ export function AnalysisReviewCard({
           </div>
         )}
 
-        <div className="flex gap-3 pt-1">
+        <div className="flex flex-col sm:flex-row gap-3 pt-1">
           <Button
             variant="secondary"
             onClick={onDiscard}

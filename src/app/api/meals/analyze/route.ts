@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { analyzeFoodImage } from "@/lib/gemini/analyzeFoodImage";
-import { getGeminiHttpError } from "@/lib/gemini/client";
+import { analyzeFoodText } from "@/lib/gemini/analyzeFoodText";
+import { GeminiRequestError, getGeminiHttpError } from "@/lib/gemini/client";
 import { rateLimit } from "@/lib/rate-limit";
+
+export const maxDuration = 60;
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_BYTES = parseInt(process.env.MAX_IMAGE_UPLOAD_MB ?? "6") * 1024 * 1024;
@@ -40,7 +43,7 @@ export async function POST(req: NextRequest) {
   }
 
   const file = formData.get("image") as File | null;
-  const hint = (formData.get("hint") as string | null) ?? undefined;
+  const hint = ((formData.get("hint") as string | null) ?? "").trim();
 
   if (!file) {
     return NextResponse.json({ error: "No image provided" }, { status: 400 });
@@ -67,7 +70,7 @@ export async function POST(req: NextRequest) {
     const analysis = await analyzeFoodImage({
       imageBuffer,
       mimeType: file.type,
-      userHint: hint,
+      userHint: hint || undefined,
       profile: {
         sex: profile.sex,
         age: profile.age,
@@ -80,7 +83,42 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ analysis });
   } catch (err) {
     console.error("Gemini analysis error:", err);
+
+    if (hint.length >= 2 && canFallbackToTextAnalysis(err)) {
+      try {
+        const analysis = await analyzeFoodText({
+          description: hint,
+          profile: {
+            sex: profile.sex,
+            age: profile.age,
+            heightCm: profile.heightCm,
+            currentWeightKg: profile.currentWeightKg,
+            dailyCalorieTarget: profile.dailyCalorieTarget,
+          },
+        });
+
+        return NextResponse.json({
+          analysis,
+          source: "manual",
+          notice:
+            "Photo analysis was slow, so this estimate was made from your food hint instead.",
+        });
+      } catch (fallbackErr) {
+        console.error("Gemini text fallback error:", fallbackErr);
+      }
+    }
+
     const error = getGeminiHttpError(err, "Failed to analyze image. Please try again.");
     return NextResponse.json({ error: error.message }, { status: error.status });
   }
+}
+
+function canFallbackToTextAnalysis(err: unknown): boolean {
+  if (!(err instanceof GeminiRequestError)) return false;
+
+  return (
+    err.code === "timeout" ||
+    err.code === "transient" ||
+    err.code === "invalid_response"
+  );
 }

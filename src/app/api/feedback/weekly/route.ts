@@ -5,6 +5,8 @@ import { generateWeeklyFeedback } from "@/lib/gemini/weeklyFeedback";
 import { getGeminiHttpError } from "@/lib/gemini/client";
 import { startOfDay, endOfDay, subDays, format } from "date-fns";
 
+export const maxDuration = 30;
+
 export async function POST() {
   const session = await auth();
   if (!session?.user?.id) {

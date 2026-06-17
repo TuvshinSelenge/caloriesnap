@@ -6,6 +6,8 @@ import { analyzeFoodText } from "@/lib/gemini/analyzeFoodText";
 import { getGeminiHttpError } from "@/lib/gemini/client";
 import { rateLimit } from "@/lib/rate-limit";
 
+export const maxDuration = 30;
+
 const bodySchema = z.object({
   description: z.string().trim().min(2).max(1000),
   hint: z.string().trim().max(500).optional(),

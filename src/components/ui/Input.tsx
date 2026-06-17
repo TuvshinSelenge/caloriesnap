@@ -22,7 +22,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           id={inputId}
           className={[
-            "w-full px-3 py-2.5 text-sm bg-white border rounded-xl transition-all duration-150",
+            "w-full px-3 py-3 text-base sm:py-2.5 sm:text-sm bg-white border rounded-xl transition-all duration-150",
             "placeholder:text-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f97316] focus-visible:ring-offset-0",
             error
               ? "border-red-400 focus-visible:ring-red-400"

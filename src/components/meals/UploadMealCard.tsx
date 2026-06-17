@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { AnalysisReviewCard, type SaveData } from "./AnalysisReviewCard";
@@ -11,10 +11,19 @@ interface UploadMealCardProps {
 }
 
 type Mode = "photo" | "text";
+type AnalysisSource = "ai_image" | "manual";
+
+interface AnalysisResponse {
+  analysis?: FoodAnalysisResult;
+  error?: string;
+  source?: AnalysisSource;
+  notice?: string;
+}
 
 const MAX_ANALYSIS_IMAGE_DIMENSION = 960;
 const MAX_DIRECT_IMAGE_BYTES = 600_000;
 const ANALYSIS_IMAGE_QUALITY = 0.72;
+const ANALYSIS_UPLOAD_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export function UploadMealCard({ onMealSaved }: UploadMealCardProps) {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -25,13 +34,21 @@ export function UploadMealCard({ onMealSaved }: UploadMealCardProps) {
   const [file, setFile] = useState<File>();
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<FoodAnalysisResult>();
-  const [analysisSource, setAnalysisSource] = useState<"ai_image" | "manual">("ai_image");
+  const [analysisSource, setAnalysisSource] = useState<AnalysisSource>("ai_image");
+  const [analysisNotice, setAnalysisNotice] = useState("");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+    };
+  }, [preview]);
 
   function switchMode(next: Mode) {
     if (next === mode) return;
     setMode(next);
     setError("");
+    setAnalysisNotice("");
     setAnalysis(undefined);
   }
 
@@ -40,6 +57,7 @@ export function UploadMealCard({ onMealSaved }: UploadMealCardProps) {
     if (!f) return;
     setFile(f);
     setError("");
+    setAnalysisNotice("");
     setAnalysis(undefined);
     const url = URL.createObjectURL(f);
     setPreview(url);
@@ -48,23 +66,34 @@ export function UploadMealCard({ onMealSaved }: UploadMealCardProps) {
   async function handleAnalyze() {
     if (!file) return;
     setError("");
+    setAnalysisNotice("");
     setAnalyzing(true);
 
     try {
       const fd = new FormData();
       const analysisFile = await prepareImageForAnalysis(file);
+      if (!ANALYSIS_UPLOAD_TYPES.includes(analysisFile.type)) {
+        setError("This image format could not be prepared. Please take a JPEG photo or describe the meal.");
+        return;
+      }
       fd.append("image", analysisFile);
       if (hint) fd.append("hint", hint);
 
       const res = await fetch("/api/meals/analyze", { method: "POST", body: fd });
-      const data = await res.json();
+      const data = await readAnalysisResponse(res);
 
       if (!res.ok) {
         setError(data.error ?? "Analysis failed");
         return;
       }
 
-      setAnalysisSource("ai_image");
+      if (!data.analysis) {
+        setError("Analysis finished but returned no result. Please try describing the meal.");
+        return;
+      }
+
+      setAnalysisSource(data.source ?? "ai_image");
+      setAnalysisNotice(data.notice ?? "");
       setAnalysis(data.analysis);
     } catch {
       setError("Failed to connect. Please try again.");
@@ -79,6 +108,7 @@ export function UploadMealCard({ onMealSaved }: UploadMealCardProps) {
       return;
     }
     setError("");
+    setAnalysisNotice("");
     setAnalyzing(true);
 
     try {
@@ -87,14 +117,20 @@ export function UploadMealCard({ onMealSaved }: UploadMealCardProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ description: description.trim(), hint: hint || undefined }),
       });
-      const data = await res.json();
+      const data = await readAnalysisResponse(res);
 
       if (!res.ok) {
         setError(data.error ?? "Analysis failed");
         return;
       }
 
+      if (!data.analysis) {
+        setError("Analysis finished but returned no result. Please try again.");
+        return;
+      }
+
       setAnalysisSource("manual");
+      setAnalysisNotice(data.notice ?? "");
       setAnalysis(data.analysis);
     } catch {
       setError("Failed to connect. Please try again.");
@@ -126,6 +162,7 @@ export function UploadMealCard({ onMealSaved }: UploadMealCardProps) {
     setHint("");
     setDescription("");
     setAnalysis(undefined);
+    setAnalysisNotice("");
     if (fileRef.current) fileRef.current.value = "";
   }
 
@@ -138,6 +175,7 @@ export function UploadMealCard({ onMealSaved }: UploadMealCardProps) {
       <AnalysisReviewCard
         analysis={analysis}
         imagePreview={analysisSource === "ai_image" ? preview : undefined}
+        notice={analysisNotice}
         onSave={handleSave}
         onDiscard={handleDiscard}
       />
@@ -146,7 +184,10 @@ export function UploadMealCard({ onMealSaved }: UploadMealCardProps) {
 
   return (
     <div className="bg-white rounded-2xl border border-[#fed7aa]/60 shadow-sm p-5">
-      <h3 className="font-semibold text-[#1f1f1f] mb-4">Log a meal</h3>
+      <h3 className="font-semibold text-[#1f1f1f] mb-1">Log a meal</h3>
+      <p className="text-sm text-gray-500 mb-4">
+        Use a photo or describe the meal. Add portions for the best estimate.
+      </p>
 
       {/* Mode toggle */}
       <div className="grid grid-cols-2 gap-1 p-1 bg-[#fff7ed] rounded-xl mb-4">
@@ -178,8 +219,8 @@ export function UploadMealCard({ onMealSaved }: UploadMealCardProps) {
           <div
             onClick={() => fileRef.current?.click()}
             className={[
-              "border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all duration-150 mb-4",
-              preview ? "border-[#f97316] p-2" : "border-[#fed7aa] hover:border-[#f97316] p-8",
+              "min-h-44 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all duration-150 mb-4 active:scale-[0.99]",
+              preview ? "border-[#f97316] p-2" : "border-[#fed7aa] hover:border-[#f97316] p-6",
             ].join(" ")}
           >
             {preview ? (
@@ -187,7 +228,7 @@ export function UploadMealCard({ onMealSaved }: UploadMealCardProps) {
               <img
                 src={preview}
                 alt="Selected food"
-                className="max-h-48 rounded-xl object-contain"
+                className="max-h-60 rounded-xl object-contain"
               />
             ) : (
               <>
@@ -203,7 +244,7 @@ export function UploadMealCard({ onMealSaved }: UploadMealCardProps) {
           <input
             ref={fileRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp"
+            accept="image/*"
             capture="environment"
             className="hidden"
             onChange={handleFileChange}
@@ -221,7 +262,14 @@ export function UploadMealCard({ onMealSaved }: UploadMealCardProps) {
 
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600">
-                  {error}
+                  <p>{error}</p>
+                  <button
+                    type="button"
+                    onClick={() => switchMode("text")}
+                    className="mt-2 min-h-9 text-sm font-medium text-red-700 underline underline-offset-2"
+                  >
+                    Describe the meal instead
+                  </button>
                 </div>
               )}
 
@@ -268,6 +316,21 @@ export function UploadMealCard({ onMealSaved }: UploadMealCardProps) {
       )}
     </div>
   );
+}
+
+async function readAnalysisResponse(res: Response): Promise<AnalysisResponse> {
+  const text = await res.text();
+  if (!text) return {};
+
+  try {
+    return JSON.parse(text) as AnalysisResponse;
+  } catch {
+    return {
+      error: res.ok
+        ? "The server returned an unreadable analysis response. Please try again."
+        : "The server returned an unexpected error. Please try again.",
+    };
+  }
 }
 
 async function prepareImageForAnalysis(file: File): Promise<File> {
